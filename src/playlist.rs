@@ -39,7 +39,7 @@ pub async fn load_playlist() -> AppState {
     app_state
 }
 
-pub fn deserialize_playlist(state: &AppState) -> Result<bytes::Bytes, Error> {
+pub fn deserialize_playlist(state: &AppState, host: &str) -> Result<bytes::Bytes, Error> {
     let mut out = String::with_capacity(state.channels.len() * 160);
     out.push_str("#EXTM3U\n");
 
@@ -60,10 +60,11 @@ pub fn deserialize_playlist(state: &AppState) -> Result<bytes::Bytes, Error> {
 
         out.push('\n');
 
-        // Proxied URL
+        // Proxied URL - use the requesting host so it works via Tailscale or any hostname
+        // The host header already includes the port if non-standard
         let proxied_url = format!(
-            "http://localhost:{}/channel/{}",
-            state.config.port,
+            "http://{}/channel/{}",
+            host,
             encode(&info.title)
         );
 

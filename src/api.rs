@@ -10,6 +10,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{delete, get, post},
 };
+use axum::http::HeaderMap;
 use bytes::Bytes;
 use futures_util::StreamExt;
 use serde::Serialize;
@@ -47,8 +48,18 @@ pub async fn serve() {
  * We need this for the proxy to be transparent and "backwards compatible"
  * i.e.: user can set the proxy url as if it was talking with the upstream
  */
-async fn load(State(state): State<AppState>) -> Result<Response<Body>, UpstreamFetchError> {
-    let body = deserialize_playlist(&state); // bytes::Bytes
+async fn load(
+    headers: HeaderMap,
+    State(state): State<AppState>,
+) -> Result<Response<Body>, UpstreamFetchError> {
+    // Extract Host header (falls back to localhost:port if absent)
+    let host = headers
+        .get("host")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| format!("localhost:{}", state.config.port));
+
+    let body = deserialize_playlist(&state, &host); // bytes::Bytes
 
     Ok(Response::builder()
         .status(StatusCode::OK)
