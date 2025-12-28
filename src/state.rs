@@ -47,6 +47,7 @@ pub struct AppState {
     pub config: AppConfig,
     // static, constructed at startup time - no shared ownership needed
     pub channels: DashMap<String, Info>, // title -> Stream info
+    pub channel_order: Arc<Vec<String>>, // preserves original playlist order
     pub streams: Arc<DashMap<String, broadcast::Sender<Bytes>>>, // URL -> Active Broadcast
     /*
      * we can only have ONE concurrent upstream connection at any time
